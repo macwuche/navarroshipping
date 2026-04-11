@@ -11,3 +11,9 @@ NODE_ENV = "production"
 [deployment]
 run = ["sh", "-c", "npm run build && npm start"]
 build = ["sh", "-c", "npm install"]
+
+[userenv]
+
+[userenv.shared]
+NODE_ENV = "production"
+PORT = "3000"
