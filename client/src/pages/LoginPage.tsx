@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useLocation } from "wouter"
+import { Link, useLocation } from "wouter"
 import { Truck, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,9 +19,10 @@ export function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await login(formData.email, formData.password)
+      const data = await login(formData.email, formData.password)
       toast({ title: "Login successful", description: "Welcome back to Navarro Shipping" })
-      setLocation("/admin/dashboard")
+      const role = data?.user?.role
+      setLocation(role === "admin" || role === "staff" ? "/admin/dashboard" : "/user/dashboard")
     } catch (error) {
       toast({
         title: "Login failed",
@@ -43,7 +44,7 @@ export function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold">Navarro Shipping</CardTitle>
-          <CardDescription>Sign in to manage shipments</CardDescription>
+          <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,7 +53,7 @@ export function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@navarroshipping.com"
+                placeholder="you@example.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 disabled={isLoading}
@@ -79,9 +80,13 @@ export function LoginPage() {
               )}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Default credentials:</p>
-            <p className="font-mono text-xs mt-1">admin@navarroshipping.com / admin123</p>
+          <div className="mt-5 text-center text-sm text-muted-foreground space-y-2">
+            <p>
+              Don't have an account?{" "}
+              <Link href="/user/signup" className="text-primary hover:underline font-medium">
+                Sign up
+              </Link>
+            </p>
           </div>
         </CardContent>
       </Card>

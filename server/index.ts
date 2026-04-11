@@ -130,6 +130,32 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() })
 })
 
+app.post("/api/auth/register", async (req, res, next) => {
+  try {
+    const { name, email, password } = req.body
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" })
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" })
+    }
+    const existing = await db.query.users.findFirst({ where: eq(users.email, email) })
+    if (existing) {
+      return res.status(409).json({ message: "An account with this email already exists" })
+    }
+    const passwordHash = await bcrypt.hash(password, 10)
+    const [newUser] = await db.insert(users).values({ name, email, passwordHash, role: "customer" }).returning()
+    const sessionUser = { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role }
+    req.logIn(sessionUser, (err) => {
+      if (err) return next(err)
+      res.status(201).json({ user: sessionUser, message: "Account created successfully" })
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ message: "Registration failed" })
+  }
+})
+
 app.post("/api/auth/login", (req, res, next) => {
   passport.authenticate("local", (err: Error | null, user: any, info: { message: string } | undefined) => {
     if (err) {

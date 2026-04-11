@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { eq, desc, count } from "drizzle-orm"
+import { eq, desc, count, and, inArray } from "drizzle-orm"
 import { NodePgDatabase } from "drizzle-orm/node-postgres"
 import * as schema from "../db/schema"
 import { shipments, trackingEvents, settings } from "../db/schema"
@@ -187,6 +187,37 @@ export function createRouter(db: NodePgDatabase<typeof schema>) {
       res.json(shipment)
     } catch (error) {
       res.status(500).json({ message: "Failed to track shipment" })
+    }
+  })
+
+  // --- User-specific routes ---
+  router.get("/user/dashboard", isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id
+      const [total] = await db.select({ count: count() }).from(shipments).where(eq(shipments.customerId, userId))
+      const [active] = await db.select({ count: count() }).from(shipments).where(
+        and(eq(shipments.customerId, userId), inArray(shipments.status, ["pending", "in-transit", "out-for-delivery"]))
+      )
+      const [delivered] = await db.select({ count: count() }).from(shipments).where(
+        and(eq(shipments.customerId, userId), eq(shipments.status, "delivered"))
+      )
+      res.json({ total: Number(total.count), active: Number(active.count), delivered: Number(delivered.count) })
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch dashboard stats" })
+    }
+  })
+
+  router.get("/user/shipments", isAuthenticated, async (req, res) => {
+    try {
+      const userId = (req.user as any)?.id
+      const userShipments = await db.query.shipments.findMany({
+        where: eq(shipments.customerId, userId),
+        with: { trackingEvents: { orderBy: [desc(trackingEvents.timestamp)] } },
+        orderBy: [desc(shipments.createdAt)],
+      })
+      res.json(userShipments)
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch shipments" })
     }
   })
 
