@@ -7,11 +7,11 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart },
-  { href: "/shipments", label: "All Shipments", icon: Package },
-  { href: "/shipments/new", label: "Create Shipment", icon: FileText },
-  { href: "/track", label: "Track Package", icon: MapPin },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/admin/dashboard", label: "Dashboard", icon: BarChart },
+  { href: "/admin/shipments", label: "All Shipments", icon: Package },
+  { href: "/admin/shipments/new", label: "Create Shipment", icon: FileText },
+  { href: "/tracking", label: "Track Package", icon: MapPin },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 
 export function Sidebar({ className }: SidebarProps) {
@@ -46,7 +46,7 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Quick Actions
           </div>
-          <Link href="/shipments/new">
+          <Link href="/admin/shipments/new">
             <button className="w-full bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
               + New Shipment
             </button>

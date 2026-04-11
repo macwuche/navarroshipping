@@ -5,7 +5,8 @@
       "Bash(npm run:*)",
       "Bash(netstat -ano)",
       "Bash(findstr :3001)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(ls:*)"
     ]
   }
 }

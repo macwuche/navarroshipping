@@ -11,7 +11,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation("/login")
+      setLocation("/user/login")
     }
   }, [user, isLoading, setLocation])
 
@@ -29,7 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function RedirectToLogin() {
   const [, setLocation] = useLocation()
-  useEffect(() => { setLocation("/login") }, [setLocation])
+  useEffect(() => { setLocation("/user/login") }, [setLocation])
   return null
 }
 
@@ -45,27 +45,27 @@ function App() {
   return (
     <>
       <Switch>
-        <Route path="/login">
+        <Route path="/user/login">
           <AuthLayout><LoginPage /></AuthLayout>
         </Route>
 
-        <Route path="/dashboard">
+        <Route path="/admin/dashboard">
           <ProtectedRoute>{wrap(<DashboardPage />)}</ProtectedRoute>
         </Route>
 
-        <Route path="/shipments/new">
+        <Route path="/admin/shipments/new">
           <ProtectedRoute>{wrap(<CreateShipmentPage />)}</ProtectedRoute>
         </Route>
 
-        <Route path="/shipments">
+        <Route path="/admin/shipments">
           <ProtectedRoute>{wrap(<ShipmentsPage />)}</ProtectedRoute>
         </Route>
 
-        <Route path="/track/:trackingNumber?">
+        <Route path="/tracking/:trackingNumber?">
           {wrap(<TrackPage />)}
         </Route>
 
-        <Route path="/settings">
+        <Route path="/admin/settings">
           <ProtectedRoute>{wrap(<SettingsPage />)}</ProtectedRoute>
         </Route>
 

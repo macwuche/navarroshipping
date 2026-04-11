@@ -43,7 +43,7 @@ export function DashboardPage() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Overview of your shipping operations</p>
         </div>
-        <Link href="/shipments/new">
+        <Link href="/admin/shipments/new">
           <Button>+ Create Shipment</Button>
         </Link>
       </div>
@@ -65,7 +65,7 @@ export function DashboardPage() {
               <CardTitle>Recent Shipments</CardTitle>
               <CardDescription>Latest consignments in the system</CardDescription>
             </div>
-            <Link href="/shipments">
+            <Link href="/admin/shipments">
               <Button variant="outline" size="sm">View All</Button>
             </Link>
           </div>
@@ -99,7 +99,7 @@ export function DashboardPage() {
                         {s.estimatedDelivery ? new Date(s.estimatedDelivery).toLocaleDateString() : "—"}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Link href={`/track/${s.trackingNumber}`}>
+                        <Link href={`/tracking/${s.trackingNumber}`}>
                           <Button variant="ghost" size="sm">Track</Button>
                         </Link>
                       </td>

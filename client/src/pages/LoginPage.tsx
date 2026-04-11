@@ -21,7 +21,7 @@ export function LoginPage() {
     try {
       await login(formData.email, formData.password)
       toast({ title: "Login successful", description: "Welcome back to Navarro Shipping" })
-      setLocation("/dashboard")
+      setLocation("/admin/dashboard")
     } catch (error) {
       toast({
         title: "Login failed",

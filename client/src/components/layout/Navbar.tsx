@@ -15,17 +15,17 @@ export function Navbar({ user, onLogout }: NavbarProps) {
   const [location] = useLocation()
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: Package },
-    { href: "/shipments", label: "Shipments", icon: Truck },
-    { href: "/track", label: "Track", icon: Package },
-    { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/admin/dashboard", label: "Dashboard", icon: Package },
+    { href: "/admin/shipments", label: "Shipments", icon: Truck },
+    { href: "/tracking", label: "Track", icon: Package },
+    { href: "/admin/settings", label: "Settings", icon: Settings },
   ]
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="flex h-16 items-center px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 mr-6">
+        <Link href="/admin/dashboard" className="flex items-center space-x-2 mr-6">
           <div className="bg-primary text-primary-foreground p-2 rounded-lg">
             <Truck className="h-6 w-6" />
           </div>

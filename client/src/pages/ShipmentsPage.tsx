@@ -49,7 +49,7 @@ export function ShipmentsPage() {
           <h1 className="text-3xl font-bold">Shipments</h1>
           <p className="text-muted-foreground">Manage all consignments</p>
         </div>
-        <Link href="/shipments/new">
+        <Link href="/admin/shipments/new">
           <Button>+ Create Shipment</Button>
         </Link>
       </div>
@@ -119,7 +119,7 @@ export function ShipmentsPage() {
                         {s.estimatedDelivery ? new Date(s.estimatedDelivery).toLocaleDateString() : "—"}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Link href={`/track/${s.trackingNumber}`}>
+                        <Link href={`/tracking/${s.trackingNumber}`}>
                           <Button variant="ghost" size="sm"><Eye className="h-4 w-4" /></Button>
                         </Link>
                       </td>

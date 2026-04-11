@@ -103,7 +103,7 @@ export function CreateShipmentPage() {
         description: `Tracking number: ${shipment.trackingNumber}`,
       })
 
-      setLocation(`/track/${shipment.trackingNumber}`)
+      setLocation(`/tracking/${shipment.trackingNumber}`)
     } catch (error) {
       toast({
         title: "Failed to create shipment",
@@ -119,7 +119,7 @@ export function CreateShipmentPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/shipments">
+        <Link href="/admin/shipments">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -348,7 +348,7 @@ export function CreateShipmentPage() {
 
         {/* Submit */}
         <div className="flex justify-end gap-4 mt-6">
-          <Link href="/shipments">
+          <Link href="/admin/shipments">
             <Button type="button" variant="outline">
               Cancel
             </Button>
