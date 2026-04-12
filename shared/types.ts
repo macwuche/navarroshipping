@@ -37,12 +37,21 @@ export interface Shipment {
 }
 
 export type ShipmentStatus =
-  | 'pending'
-  | 'in-transit'
-  | 'out-for-delivery'
-  | 'delivered'
-  | 'exception'
-  | 'cancelled';
+  | 'Pending_Collection'
+  | 'Received Office'
+  | 'In_Transit'
+  | 'In_Warehouse'
+  | 'Distribution'
+  | 'Available'
+  | 'On Route'
+  | 'Approved'
+  | 'Pick_up'
+  | 'Quotation'
+  | 'Pending_quote'
+  | 'Invoiced'
+  | 'Cancelled'
+  | 'Pending_payment'
+  | string;
 
 export interface TrackingEvent {
   id: number;

@@ -22,64 +22,57 @@ export function UserLayout({ children, user, onLogout }: UserLayoutProps) {
     { href: "/tracking", label: "Track Package", icon: Search },
   ]
 
+  const allNavItems = [
+    ...navItems,
+    ...(user ? [{ href: "/user/profile", label: user.name, icon: User, isProfile: true }] : []),
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="border-b bg-white sticky top-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto flex h-16 items-center px-4 sm:px-6">
-          {/* Logo */}
-          <Link href="/user/dashboard" className="flex items-center space-x-2 mr-8">
-            <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-              <Truck className="h-5 w-5" />
-            </div>
-            <span className="font-bold text-lg hidden sm:inline-block">Navarro Shipping</span>
-          </Link>
-
-          {/* Navigation */}
-          <div className="flex items-center space-x-1 mr-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              const isActive = location === item.href || (item.href !== "/user/dashboard" && location.startsWith(item.href))
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={isActive ? "secondary" : "ghost"}
-                    size="sm"
-                    className={cn("gap-2", !isActive && "text-muted-foreground")}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{item.label}</span>
-                  </Button>
-                </Link>
-              )
-            })}
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {/* Top Nav Bar with centered logo */}
+      <header className="bg-white border-b">
+        <div className="flex items-center justify-center h-16">
+          <div className="flex items-center gap-2">
+            <Truck className="h-6 w-6 text-primary" />
+            <span className="text-lg font-bold tracking-tight">Navarro Shipping</span>
           </div>
-
-          {/* User info + logout */}
-          {user && (
-            <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
-                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-sm font-medium text-gray-700">{user.name}</span>
-              </div>
-              <div className="md:hidden h-8 w-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              {onLogout && (
-                <Button variant="ghost" size="sm" onClick={onLogout} className="gap-1.5 text-muted-foreground hover:text-foreground">
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline text-xs">Logout</span>
-                </Button>
-              )}
-            </div>
-          )}
         </div>
-      </nav>
+      </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {children}
       </main>
+
+      {/* Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg">
+        <div className="flex items-center justify-around h-16 max-w-7xl mx-auto px-4">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const isActive = location === item.href || (item.href !== "/user/dashboard" && location.startsWith(item.href))
+            return (
+              <Link key={item.href} href={item.href} className="flex-1">
+                <div className={cn(
+                  "flex flex-col items-center justify-center gap-1 py-1 rounded-lg transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}>
+                  <Icon className="h-5 w-5" />
+                  <span className="text-xs font-medium">{item.label}</span>
+                </div>
+              </Link>
+            )
+          })}
+
+          {/* Logout button as a nav item */}
+          {user && onLogout && (
+            <button onClick={onLogout} className="flex-1">
+              <div className="flex flex-col items-center justify-center gap-1 py-1 rounded-lg text-muted-foreground transition-colors hover:text-foreground">
+                <LogOut className="h-5 w-5" />
+                <span className="text-xs font-medium">Logout</span>
+              </div>
+            </button>
+          )}
+        </div>
+      </nav>
     </div>
   )
 }

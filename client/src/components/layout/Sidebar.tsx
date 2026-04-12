@@ -10,6 +10,7 @@ const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: BarChart },
   { href: "/admin/shipments", label: "All Shipments", icon: Package },
   { href: "/admin/shipments/new", label: "Create Shipment", icon: FileText },
+  { href: "/admin/users", label: "Users", icon: Users },
   { href: "/tracking", label: "Track Package", icon: MapPin },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
@@ -18,7 +19,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation()
 
   return (
-    <aside className={cn("w-64 border-r bg-background min-h-[calc(100vh-4rem)]", className)}>
+    <aside className={cn("w-64 border-r bg-background min-h-full", className)}>
       <div className="p-4">
         <nav className="space-y-1">
           {navItems.map((item) => {

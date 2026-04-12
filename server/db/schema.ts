@@ -3,14 +3,6 @@ import { relations } from "drizzle-orm";
 
 // Enums
 export const roleEnum = pgEnum('role', ['admin', 'staff', 'customer']);
-export const shipmentStatusEnum = pgEnum('shipment_status', [
-  'pending',
-  'in-transit',
-  'out-for-delivery',
-  'delivered',
-  'exception',
-  'cancelled'
-]);
 
 // Users table
 export const users = pgTable('users', {
@@ -39,7 +31,9 @@ export const shipments = pgTable('shipments', {
   weightUnit: text('weight_unit').notNull().default('kg'),
   dimensions: jsonb('dimensions'), // { length, width, height, unit }
   description: text('description'),
-  status: shipmentStatusEnum('status').notNull().default('pending'),
+  status: text('status').notNull().default('Pending_Collection'),
+  destinationLatitude: text('destination_latitude'),
+  destinationLongitude: text('destination_longitude'),
   estimatedDelivery: timestamp('estimated_delivery'),
   actualDelivery: timestamp('actual_delivery'),
   customerId: integer('customer_id').references(() => users.id),
@@ -51,7 +45,7 @@ export const shipments = pgTable('shipments', {
 export const trackingEvents = pgTable('tracking_events', {
   id: serial('id').primaryKey(),
   shipmentId: integer('shipment_id').notNull().references(() => shipments.id, { onDelete: 'cascade' }),
-  status: shipmentStatusEnum('status').notNull(),
+  status: text('status').notNull(),
   location: text('location').notNull(),
   latitude: decimal('latitude'),
   longitude: decimal('longitude'),

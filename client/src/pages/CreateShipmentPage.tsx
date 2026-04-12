@@ -37,6 +37,8 @@ export function CreateShipmentPage() {
     dimensionUnit: "cm",
     description: "",
     estimatedDelivery: "",
+    destinationLatitude: "",
+    destinationLongitude: "",
   })
 
   const handleChange = (
@@ -341,6 +343,36 @@ export function CreateShipmentPage() {
                   value={formData.estimatedDelivery}
                   onChange={handleChange}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Destination Coordinates <span className="text-muted-foreground">(optional — used for map)</span></Label>
+                <p className="text-xs text-muted-foreground">Use negative values for West longitude (e.g. USA: 38.7946, -106.5348) and South latitude.</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="destinationLatitude" className="text-xs text-muted-foreground">Latitude (N=positive, S=negative)</Label>
+                    <Input
+                      id="destinationLatitude"
+                      name="destinationLatitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. 38.7946"
+                      value={formData.destinationLatitude}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="destinationLongitude" className="text-xs text-muted-foreground">Longitude (E=positive, W=negative)</Label>
+                    <Input
+                      id="destinationLongitude"
+                      name="destinationLongitude"
+                      type="number"
+                      step="any"
+                      placeholder="e.g. -106.5348"
+                      value={formData.destinationLongitude}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
