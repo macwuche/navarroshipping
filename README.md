@@ -723,6 +723,58 @@ pm2 logs navarro --lines 20
 
 ---
 
+### Session 5 — Bug Fixes: Logout Button, Edit Page Routing, Required Coordinates (April 13, 2026)
+
+**Three bugs reported and fixed:**
+
+**Bug 1 — No logout button on admin panel**
+
+Root cause: `Layout.tsx` accepted `user` and `onLogout` props from `App.tsx` but never passed them to `Sidebar`. `Sidebar` also had no logout button.
+
+Fix:
+- `Sidebar.tsx`: Added `user` and `onLogout` props. Added user name/role display and a Logout button at the bottom of the sidebar.
+- `Layout.tsx`: Changed `<Sidebar />` to `<Sidebar user={user} onLogout={onLogout} />`.
+
+**Bug 2 — Edit shipment page caused logout (route ordering)**
+
+Root cause: In `App.tsx`, the route `/admin/shipments` was listed BEFORE `/admin/shipments/:id/edit` inside wouter's `<Switch>`. Wouter matches routes in order, so navigating to `/admin/shipments/5/edit` was hitting the more general route first, causing a mismatch that fell through to the `<Redirect to="/user/login" />` fallback — which looked like a logout.
+
+Fix: Moved the `/:id/edit` route ABOVE the list route in `App.tsx`. Also added `type="button"` to all action buttons in `ShipmentsPage` to prevent any accidental form submission.
+
+**Bug 3 — Shipments could be created without Destination Coordinates**
+
+Root cause: Lat/Lng fields were marked optional. Without coordinates, the tracking map cannot display a pin.
+
+Fix: Made both Destination Latitude and Longitude required on the Create Shipment form (HTML `required` attribute + JS validation check).
+
+**Files changed:** `client/src/components/layout/Sidebar.tsx`, `client/src/components/layout/Layout.tsx`, `client/src/App.tsx`, `client/src/pages/CreateShipmentPage.tsx`, `client/src/pages/ShipmentsPage.tsx`
+
+**Commit:** `789271b` — pushed to `macwuche/navarroshipping` on April 13, 2026.
+
+**To deploy on VPS:**
+```bash
+cd /var/www/navarro
+git pull origin main
+npm run build
+pm2 restart navarro
+```
+
+---
+
+**Question answered: Will making the GitHub repo private break VPS deployments?**
+
+No. Making the repo private does not affect `git pull` from the VPS. However, GitHub no longer accepts password authentication — you need a **Personal Access Token (PAT)**:
+
+1. Go to GitHub → Settings → Developer settings → Personal access tokens → Generate new token
+2. Give it `repo` scope
+3. On the VPS, update the remote URL to include the token:
+   ```bash
+   git remote set-url origin https://YOUR_TOKEN@github.com/macwuche/navarroshipping.git
+   ```
+   Or configure it in Git credentials. After that, `git pull origin main` works exactly as before.
+
+---
+
 ## Troubleshooting
 
 | Problem | Command to diagnose |
