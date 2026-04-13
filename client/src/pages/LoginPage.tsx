@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useLocation } from "wouter"
+import { Link } from "wouter"
 import { Truck, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/hooks/useAuth"
 
 export function LoginPage() {
-  const [, setLocation] = useLocation()
   const { toast } = useToast()
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
@@ -19,10 +18,10 @@ export function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const data = await login(formData.email, formData.password)
+      await login(formData.email, formData.password)
       toast({ title: "Login successful", description: "Welcome back to Navarro Shipping" })
-      const role = data?.user?.role
-      setLocation(role === "admin" || role === "staff" ? "/admin/dashboard" : "/user/dashboard")
+      // Navigation is handled by App.tsx — once user is set in context,
+      // the /user/login route automatically redirects to the dashboard
     } catch (error) {
       toast({
         title: "Login failed",

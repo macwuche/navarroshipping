@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ShipmentMap } from "@/components/tracking/ShipmentMap"
 import { useAuth } from "@/hooks/useAuth"
+import { useWebSocket } from "@/hooks/useWebSocket"
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -31,6 +32,7 @@ interface TrackingEvent {
 
 interface Shipment {
   id: number
+  customerId: number | null
   trackingNumber: string
   senderName: string
   senderAddress: string
@@ -162,6 +164,28 @@ export function UserDashboardPage() {
 
     fetchData()
   }, [])
+
+  // Real-time updates: when a shipment belonging to this user is updated, patch local state
+  useWebSocket((msg) => {
+    if (msg.type !== "shipment:updated") return
+    const updated: Shipment = msg.shipment
+    if (updated.customerId !== user?.id) return
+
+    setShipments((prev) => {
+      const exists = prev.some((s) => s.id === updated.id)
+      const next = exists
+        ? prev.map((s) => (s.id === updated.id ? updated : s))
+        : [updated, ...prev]
+      // Recalculate stats from the new list
+      setStats({
+        total: next.length,
+        active: next.filter((s) => ["pending", "in-transit", "out-for-delivery"].includes(s.status)).length,
+        delivered: next.filter((s) => s.status === "delivered").length,
+      })
+      return next
+    })
+    setSelectedShipment((prev) => (prev?.id === updated.id ? updated : prev))
+  })
 
   // Build map points from selected shipment's tracking events (chronological order)
   const mapPoints =

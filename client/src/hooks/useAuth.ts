@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext, createContext } from "react"
 
 interface User {
   id: number
@@ -7,12 +7,22 @@ interface User {
   role: "admin" | "staff" | "customer"
 }
 
-export function useAuth() {
+interface AuthContextValue {
+  user: User | null
+  isLoading: boolean
+  login: (email: string, password: string) => Promise<any>
+  register: (name: string, email: string, password: string) => Promise<any>
+  logout: () => Promise<void>
+  isAuthenticated: boolean
+}
+
+export const AuthContext = createContext<AuthContextValue | null>(null)
+
+export function useAuthProvider(): AuthContextValue {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Verify session with server; fall back to localStorage if server is unreachable
     fetch("/api/auth/me", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -20,17 +30,13 @@ export function useAuth() {
           setUser(data.user)
           localStorage.setItem("user", JSON.stringify(data.user))
         } else {
-          const stored = localStorage.getItem("user")
-          if (stored) {
-            try {
-              setUser(JSON.parse(stored))
-            } catch {
-              localStorage.removeItem("user")
-            }
-          }
+          // Server says not authenticated — clear any stale local data
+          localStorage.removeItem("user")
+          setUser(null)
         }
       })
       .catch(() => {
+        // Network error only — fall back to localStorage
         const stored = localStorage.getItem("user")
         if (stored) {
           try {
@@ -62,15 +68,40 @@ export function useAuth() {
     return data
   }
 
+  const register = async (name: string, email: string, password: string) => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name, email, password }),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || "Registration failed")
+    }
+
+    const data = await response.json()
+    setUser(data.user)
+    localStorage.setItem("user", JSON.stringify(data.user))
+    return data
+  }
+
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" })
     } catch {
-      // ignore
+      // ignore network errors
     }
     setUser(null)
     localStorage.removeItem("user")
   }
 
-  return { user, isLoading, login, logout, isAuthenticated: !!user }
+  return { user, isLoading, login, register, logout, isAuthenticated: !!user }
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider")
+  return ctx
 }

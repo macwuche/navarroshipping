@@ -1,15 +1,16 @@
 import { useState } from "react"
-import { Link, useLocation } from "wouter"
+import { Link } from "wouter"
 import { Truck, Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/hooks/useAuth"
 
 export function UserSignupPage() {
-  const [, setLocation] = useLocation()
   const { toast } = useToast()
+  const { register } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
@@ -32,18 +33,10 @@ export function UserSignupPage() {
 
     setIsLoading(true)
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: formData.name, email: formData.email, password: formData.password }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.message || "Registration failed")
-
-      localStorage.setItem("user", JSON.stringify(data.user))
+      const data = await register(formData.name, formData.email, formData.password)
       toast({ title: "Account created!", description: `Welcome to Navarro Shipping, ${data.user.name}!` })
-      setLocation("/user/dashboard")
+      // Navigation is handled by App.tsx — once user is set in context,
+      // the /user/signup route automatically redirects to the dashboard
     } catch (error) {
       toast({
         title: "Registration failed",
