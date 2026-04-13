@@ -799,6 +799,22 @@ pm2 restart navarro
 
 ---
 
+### Session 7 — Show/Hide Password Toggle on Login & Signup (April 13, 2026)
+
+**Feature added:** Eye/EyeOff icon button inside all password fields so users can reveal or hide what they're typing.
+
+- `LoginPage.tsx` — one toggle for the password field
+- `UserSignupPage.tsx` — independent toggles for both the Password and Confirm Password fields (each controlled separately)
+
+**Commit:** `81316c6` — pushed to `macwuche/navarroshipping` on April 13, 2026.
+
+**To deploy on VPS:**
+```bash
+cd /var/www/navarro && git pull origin main && npm run build && pm2 restart navarro
+```
+
+---
+
 ## Troubleshooting
 
 | Problem | Command to diagnose |
