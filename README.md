@@ -813,6 +813,8 @@ pm2 restart navarro
 cd /var/www/navarro && git pull origin main && npm run build && pm2 restart navarro
 ```
 
+**Confirmed working on VPS** — April 13, 2026. Hard refresh required after deploy to clear cached assets.
+
 ---
 
 ## Troubleshooting
