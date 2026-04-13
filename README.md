@@ -775,6 +775,30 @@ No. Making the repo private does not affect `git pull` from the VPS. However, Gi
 
 ---
 
+### Session 6 — Push Remaining Changes to GitHub (April 13, 2026)
+
+Committed and pushed pre-existing changes that had been sitting unstaged:
+
+| File | Change |
+|---|---|
+| `client/src/hooks/useAuth.ts` | Refactored auth into React Context (`AuthContext`/`useAuthProvider`) so all components share one session check |
+| `client/src/main.tsx` | Wrapped app in `AuthProvider` and `WsProvider` context providers |
+| `client/src/pages/LoginPage.tsx` | Removed imperative `setLocation` after login — now relies on App.tsx route redirect |
+| `client/src/pages/UserSignupPage.tsx` | Uses `register()` from auth context instead of raw fetch; same redirect approach |
+| `client/src/pages/UserDashboardPage.tsx` | Subscribes to WebSocket for real-time shipment updates on the user dashboard |
+
+**Commit:** `bd42e01` — pushed to `macwuche/navarroshipping` on April 13, 2026.
+
+**To deploy on VPS:**
+```bash
+cd /var/www/navarro
+git pull origin main
+npm run build
+pm2 restart navarro
+```
+
+---
+
 ## Troubleshooting
 
 | Problem | Command to diagnose |
