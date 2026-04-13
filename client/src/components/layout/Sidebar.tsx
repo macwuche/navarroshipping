@@ -1,9 +1,11 @@
 import { Link, useLocation } from "wouter"
-import { Package, Truck, MapPin, Settings, Users, FileText, BarChart } from "lucide-react"
+import { Package, MapPin, Settings, Users, FileText, BarChart, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SidebarProps {
   className?: string
+  user?: { name: string; role: string }
+  onLogout?: () => void
 }
 
 const navItems = [
@@ -15,12 +17,12 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, user, onLogout }: SidebarProps) {
   const [location] = useLocation()
 
   return (
-    <aside className={cn("w-64 border-r bg-background min-h-full", className)}>
-      <div className="p-4">
+    <aside className={cn("w-64 border-r bg-background min-h-full flex flex-col", className)}>
+      <div className="p-4 flex-1">
         <nav className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon
@@ -28,6 +30,7 @@ export function Sidebar({ className }: SidebarProps) {
             return (
               <Link key={item.href} href={item.href}>
                 <button
+                  type="button"
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                     isActive
@@ -48,11 +51,29 @@ export function Sidebar({ className }: SidebarProps) {
             Quick Actions
           </div>
           <Link href="/admin/shipments/new">
-            <button className="w-full bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+            <button type="button" className="w-full bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
               + New Shipment
             </button>
           </Link>
         </div>
+      </div>
+
+      {/* User info + logout */}
+      <div className="p-4 border-t">
+        {user && (
+          <div className="px-3 py-2 mb-2">
+            <p className="text-sm font-medium truncate">{user.name}</p>
+            <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </button>
       </div>
     </aside>
   )

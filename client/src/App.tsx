@@ -1,5 +1,4 @@
-import { useEffect } from "react"
-import { Route, Switch, useLocation } from "wouter"
+import { Route, Switch, Redirect } from "wouter"
 import { Toaster } from "@/components/ui/toast"
 import { Layout, AuthLayout, UserLayout } from "@/components/layout"
 import {
@@ -11,17 +10,15 @@ import {
   SettingsPage,
   UserSignupPage,
   UserDashboardPage,
+  UsersPage,
+  UserProfilePage,
+  EditShipmentPage,
 } from "@/pages"
 import { useAuth } from "@/hooks/useAuth"
 
 // Redirects unauthenticated users to /user/login
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [, setLocation] = useLocation()
   const { user, isLoading } = useAuth()
-
-  useEffect(() => {
-    if (!isLoading && !user) setLocation("/user/login")
-  }, [user, isLoading, setLocation])
 
   if (isLoading) {
     return (
@@ -31,14 +28,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user) return null
+  if (!user) return <Redirect to="/user/login" />
   return <>{children}</>
-}
-
-function RedirectToLogin() {
-  const [, setLocation] = useLocation()
-  useEffect(() => { setLocation("/user/login") }, [setLocation])
-  return null
 }
 
 function App() {
@@ -64,13 +55,17 @@ function App() {
   return (
     <>
       <Switch>
-        {/* ── Auth pages ── */}
+        {/* ── Auth pages — redirect to dashboard if already logged in ── */}
         <Route path="/user/login">
-          <AuthLayout><LoginPage /></AuthLayout>
+          {user
+            ? <Redirect to={user.role === "admin" || user.role === "staff" ? "/admin/dashboard" : "/user/dashboard"} />
+            : <AuthLayout><LoginPage /></AuthLayout>}
         </Route>
 
         <Route path="/user/signup">
-          <AuthLayout><UserSignupPage /></AuthLayout>
+          {user
+            ? <Redirect to="/user/dashboard" />
+            : <AuthLayout><UserSignupPage /></AuthLayout>}
         </Route>
 
         {/* ── User dashboard ── */}
@@ -87,6 +82,10 @@ function App() {
           <ProtectedRoute>{adminWrap(<CreateShipmentPage />)}</ProtectedRoute>
         </Route>
 
+        <Route path="/admin/shipments/:id/edit">
+          <ProtectedRoute>{adminWrap(<EditShipmentPage />)}</ProtectedRoute>
+        </Route>
+
         <Route path="/admin/shipments">
           <ProtectedRoute>{adminWrap(<ShipmentsPage />)}</ProtectedRoute>
         </Route>
@@ -95,13 +94,21 @@ function App() {
           <ProtectedRoute>{adminWrap(<SettingsPage />)}</ProtectedRoute>
         </Route>
 
-        {/* ── Public tracking (works without login) ── */}
+        <Route path="/admin/users">
+          <ProtectedRoute>{adminWrap(<UsersPage />)}</ProtectedRoute>
+        </Route>
+
+        <Route path="/admin/users/:id">
+          <ProtectedRoute>{adminWrap(<UserProfilePage />)}</ProtectedRoute>
+        </Route>
+
+        {/* ── Public tracking ── */}
         <Route path="/tracking/:trackingNumber?">
-          {adminWrap(<TrackPage />)}
+          {userWrap(<TrackPage />)}
         </Route>
 
         {/* ── Fallback ── */}
-        <Route><RedirectToLogin /></Route>
+        <Route><Redirect to="/user/login" /></Route>
       </Switch>
       <Toaster />
     </>

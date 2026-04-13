@@ -64,6 +64,8 @@ export function CreateShipmentPage() {
         "receiverName",
         "receiverAddress",
         "weight",
+        "destinationLatitude",
+        "destinationLongitude",
       ]
 
       for (const field of requiredFields) {
@@ -345,8 +347,8 @@ export function CreateShipmentPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Destination Coordinates <span className="text-muted-foreground">(optional — used for map)</span></Label>
-                <p className="text-xs text-muted-foreground">Use negative values for West longitude (e.g. USA: 38.7946, -106.5348) and South latitude.</p>
+                <Label>Destination Coordinates <span className="text-destructive">*</span></Label>
+                <p className="text-xs text-muted-foreground">Required for the tracking map. Use negative values for West longitude (e.g. USA: 38.7946, -106.5348) and South latitude.</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label htmlFor="destinationLatitude" className="text-xs text-muted-foreground">Latitude (N=positive, S=negative)</Label>
@@ -358,6 +360,7 @@ export function CreateShipmentPage() {
                       placeholder="e.g. 38.7946"
                       value={formData.destinationLatitude}
                       onChange={handleChange}
+                      required
                     />
                   </div>
                   <div className="space-y-1">
@@ -370,6 +373,7 @@ export function CreateShipmentPage() {
                       placeholder="e.g. -106.5348"
                       value={formData.destinationLongitude}
                       onChange={handleChange}
+                      required
                     />
                   </div>
                 </div>

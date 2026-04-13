@@ -204,12 +204,13 @@ export function ShipmentsPage() {
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Link href={`/tracking/${s.trackingNumber}`}>
-                            <Button variant="ghost" size="sm" title="View tracking"><Eye className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="sm" title="View tracking"><Eye className="h-4 w-4" /></Button>
                           </Link>
                           <Link href={`/admin/shipments/${s.id}/edit`}>
-                            <Button variant="ghost" size="sm" title="Edit shipment"><Pencil className="h-4 w-4" /></Button>
+                            <Button type="button" variant="ghost" size="sm" title="Edit shipment"><Pencil className="h-4 w-4" /></Button>
                           </Link>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             title="Delete shipment"

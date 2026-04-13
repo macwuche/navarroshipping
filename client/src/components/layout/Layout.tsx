@@ -21,7 +21,7 @@ export function Layout({ children, user, onLogout }: LayoutProps) {
         </div>
       </header>
       <div className="flex flex-1">
-        <Sidebar />
+        <Sidebar user={user} onLogout={onLogout} />
         <main className="flex-1 p-6">
           {children}
         </main>
