@@ -20,6 +20,10 @@ dotenv.config()
 const app: Express = express()
 const PORT = process.env.PORT || 5000
 
+// Trust Replit's (and any) reverse proxy so req.secure is correct
+// and express-session sets Secure cookies properly over HTTPS
+app.set("trust proxy", 1)
+
 // Database connection
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -48,6 +52,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
+      sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   })
@@ -122,8 +127,24 @@ async function createDefaultAdmin() {
   }
 }
 
+// Create HTTP + WebSocket server early so broadcast is available to routes
+const server = http.createServer(app)
+
+const wss = new WebSocketServer({ server, path: "/ws" })
+
+wss.on("connection", () => {
+  // clients connect/disconnect silently
+})
+
+function broadcast(data: object) {
+  const msg = JSON.stringify(data)
+  wss.clients.forEach((client) => {
+    if (client.readyState === 1 /* OPEN */) client.send(msg)
+  })
+}
+
 // Mount all routes
-app.use("/api", createRouter(db))
+app.use("/api", createRouter(db, broadcast))
 
 // Routes
 app.get("/api/health", (req, res) => {
@@ -148,6 +169,7 @@ app.post("/api/auth/register", async (req, res, next) => {
     const sessionUser = { id: newUser.id, email: newUser.email, name: newUser.name, role: newUser.role }
     req.logIn(sessionUser, (err) => {
       if (err) return next(err)
+      broadcast({ type: "user:new", user: { ...sessionUser, createdAt: newUser.createdAt } })
       res.status(201).json({ user: sessionUser, message: "Account created successfully" })
     })
   } catch (error) {
@@ -198,22 +220,14 @@ if (process.env.NODE_ENV === "production") {
   })
 }
 
-// Create HTTP server
-const server = http.createServer(app)
-
-// WebSocket server for real-time updates
-const wss = new WebSocketServer({ server, path: "/ws" })
-
-wss.on("connection", (ws) => {
-  console.log("WebSocket client connected")
-
-  ws.on("message", (message) => {
-    console.log("Received:", message.toString())
-  })
-
-  ws.on("close", () => {
-    console.log("WebSocket client disconnected")
-  })
+// Handle port conflicts
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`❌ Port ${PORT} is already in use. Exiting...`)
+    process.exit(1)
+  }
+  console.error("Server error:", error)
+  process.exit(1)
 })
 
 // Start server

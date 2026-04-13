@@ -391,6 +391,338 @@ The server auto-creates an admin account on first start (if none exists):
 
 ---
 
+## Session Log
+
+This section records every deployment session — what was done, what was found, questions asked, and decisions made.
+
+---
+
+### Session 1 — Initial Planning (April 2026)
+
+**Goal:** Deploy the Navarro Shipping app on the VPS under the subdomain `access.navarroshipping.live`.
+
+**Pre-deployment questions asked and answered:**
+
+| Question | Answer |
+|---|---|
+| VPS OS? | Ubuntu 24.04 LTS |
+| Web server? | Nginx (to be confirmed on VPS) |
+| Process manager? | PM2 (to be confirmed on VPS) |
+| Existing app ports? | To be checked on VPS |
+| Existing app locations? | Skycargo at `/var/www/Skycargo/backend` confirmed. Others to be checked. |
+| Is it Node.js? | Yes — confirmed from codebase (Express.js + React + TypeScript) |
+| Database already set up? | No — first deployment, database needs to be created fresh |
+| Environment variables needed? | Yes — see Environment Variables section above |
+| DNS already pointed? | No — needs to be set up in Hostinger |
+| HTTPS/SSL wanted? | Yes — Let's Encrypt via Certbot, with auto-renewal cron job |
+
+**Decisions made:**
+- App folder: `/var/www/navarro`
+- App port: `3010` (chosen to avoid conflicts with other apps)
+- Subdomain: `access.navarroshipping.live`
+- SSL: Let's Encrypt (Certbot), auto-renew via cron at 3AM daily
+- Process manager: PM2, with startup hook so app survives reboots
+- User has BYOBU on VPS — default terminal path was `/var/www/Skycargo/backend` at start of session. Always confirm current directory before running commands.
+
+---
+
+### Session 2 — Step 1 Audit: Nginx Orphaned Process Issue (April 2026)
+
+**What we found during Step 1 (VPS pre-flight audit):**
+
+Running `systemctl status nginx` showed Nginx in a **failed** state with this error:
+```
+nginx: [emerg] bind() to 0.0.0.0:80 failed (98: Address already in use)
+nginx: [emerg] bind() to 0.0.0.0:443 failed (98: Address already in use)
+```
+Nginx had been in this failed state for 4 days (since April 9, 2026).
+
+**Root cause (diagnosed with `ss -tlnp | grep -E ':80|:443'`):**
+
+Nginx processes (PIDs 910782 and 911146) were already running and holding ports 80 and 443 — but they were **orphaned** (not tracked by systemd). When systemd tried to start a new Nginx instance, it couldn't bind to those ports, so it marked itself as failed. The orphaned processes were still actively serving the other apps on the VPS.
+
+**Fix applied:**
+```bash
+# Reset systemd's failed state
+systemctl reset-failed nginx
+
+# Gracefully stop the orphaned nginx processes
+nginx -s stop
+
+# Start nginx cleanly under systemd
+systemctl start nginx
+
+# Confirm it's running properly
+systemctl status nginx
+```
+
+**Impact on other apps:** ~5 seconds of downtime while Nginx restarted. The other apps (Node.js/PM2 processes) were never stopped — only the Nginx front door briefly closed and reopened. All existing Nginx site configs were preserved.
+
+**User confirmed:** Comfortable with brief downtime before proceeding.
+
+**Result:** Nginx came back up cleanly.
+```
+Active: active (running) since Mon 2026-04-13 15:03:46 UTC
+Main PID: 2589926 (nginx: master process)
+Worker: 2589927 (nginx: worker process)
+```
+
+---
+
+### Session 2 (continued) — Full VPS Audit Results
+
+**PM2 apps running:**
+
+| PM2 ID | Name | Port | Mode | Location |
+|---|---|---|---|---|
+| 5 | bluewave | unknown (cluster mode) | cluster | unknown |
+| 9 | crypto-trading | 5000 | fork | `/var/www/crypto-trading` |
+| 14 | newinvest | 3001 | fork | `/var/www/newinvest` |
+| 17 | skycargo-backend | 8000 | fork | `/var/www/Skycargo` |
+
+**All listening ports on VPS:**
+
+| Port | Process | Notes |
+|---|---|---|
+| 22 | sshd | SSH access |
+| 53 | systemd-resolve | DNS resolver |
+| 80 | Nginx | HTTP |
+| 443 | Nginx | HTTPS |
+| 3001 | node (newinvest) | App port |
+| 3306 | MySQL | Already installed |
+| 33060 | MySQL | X protocol |
+| 5000 | node (crypto-trading) | App port |
+| 5001 | PM2 agent | PM2 internal |
+| 5432 | PostgreSQL | Already installed — no need to install for Navarro |
+| 8000 | node (skycargo-backend) | App port |
+| **3010** | **FREE** | **Reserved for Navarro Shipping** |
+
+**Existing Nginx site configs:**
+- `bluewave`
+- `newinvest`
+- `skycargo`
+- `smartsp2p.site`
+
+**Existing `/var/www/` folders:**
+- `Skycargo/`
+- `certbot/`
+- `crypto-trading/`
+- `html/`
+- `newinvest/`
+- `navarro/` ← will be created in Step 4
+
+---
+
+### Session 2 (continued) — Step 2: DNS Setup
+
+**DNS record added in Hostinger:**
+
+| Field | Value |
+|---|---|
+| Type | A |
+| Name | `access` |
+| Points to | `76.13.139.241` |
+| TTL | 3600 |
+
+**Verification (nslookup on VPS):**
+```
+Name:   access.navarroshipping.live
+Address: 76.13.139.241
+```
+DNS propagated successfully.
+
+---
+
+### Session 2 (continued) — Step 3: Prerequisites Check
+
+All tools already installed — nothing needed:
+
+| Tool | Version |
+|---|---|
+| Node.js | v20.20.1 |
+| npm | 10.8.2 |
+| PM2 | 6.0.14 |
+| PostgreSQL | already running on port 5432 |
+
+---
+
+### Session 2 (continued) — Steps 4–7: Folder, Repo, Database, .env
+
+**Step 4 — App folder created:**
+```bash
+mkdir -p /var/www/navarro
+```
+
+**Step 5 — Repo cloned:**
+```bash
+git clone https://github.com/macwuche/navarroshipping /var/www/navarro
+```
+161 objects cloned successfully.
+
+**Step 6 — Database created:**
+```bash
+sudo -u postgres psql
+CREATE DATABASE navarro_db;
+CREATE USER navarro_user WITH ENCRYPTED PASSWORD 'MACT@08140615640Tt';
+GRANT ALL PRIVILEGES ON DATABASE navarro_db TO navarro_user;
+\q
+```
+Note: Password was initially set to placeholder, then corrected with:
+```bash
+sudo -u postgres psql -c "ALTER USER navarro_user WITH ENCRYPTED PASSWORD 'MACT@08140615640Tt';"
+```
+
+**Step 7 — .env file created:**
+
+Note: Long commands kept getting wrapped by the terminal. Fixed by running 3 short commands separately:
+```bash
+head -3 /var/www/navarro/.env > /tmp/e
+echo 'SESSION_SECRET=tFOT/YhUdxXw/7bZBsRirOrttaxCugRbl94yIgzq2FA=' >> /tmp/e
+mv /tmp/e /var/www/navarro/.env
+```
+Final `.env` verified clean:
+```
+NODE_ENV=production
+PORT=3010
+DATABASE_URL=postgresql://navarro_user:MACT@08140615640Tt@localhost:5432/navarro_db
+SESSION_SECRET=tFOT/YhUdxXw/7bZBsRirOrttaxCugRbl94yIgzq2FA=
+```
+
+---
+
+### Session 2 (continued) — Steps 8–14: Build, Migrate, PM2, Nginx, SSL, Health Check
+
+**Step 8 — Dependencies installed and app built:**
+```bash
+cd /var/www/navarro && npm install
+npm run build
+```
+- 366 packages installed
+- React frontend bundled (495kb JS, 57kb CSS)
+- TypeScript server compiled successfully
+
+**Step 9 — Database migration:**
+
+First attempt failed with `permission denied for schema public` — PostgreSQL 15+ no longer grants CREATE on public schema by default. Fixed with:
+```bash
+sudo -u postgres psql -d navarro_db -c "GRANT ALL ON SCHEMA public TO navarro_user;"
+```
+Then re-ran `npm run db:push` — all tables created successfully.
+
+**Step 10 — App started with PM2:**
+```bash
+pm2 start dist/server/index.js --name navarro
+pm2 save
+```
+- PM2 id: 18
+- Status: online
+- Default admin auto-created: admin@navarroshipping.com / admin123
+- **Change this password immediately after first login**
+
+**Step 11 — Nginx configured:**
+```bash
+nano /etc/nginx/sites-available/navarro
+ln -s /etc/nginx/sites-available/navarro /etc/nginx/sites-enabled/navarro
+nginx -t
+systemctl reload nginx
+```
+Config test passed. App responding on HTTP with `200 OK`.
+
+**Step 12 — SSL certificate installed:**
+```bash
+certbot --nginx -d access.navarroshipping.live
+```
+- Certificate issued successfully
+- Expires: 2026-07-12
+- HTTPS confirmed working: `curl -I https://access.navarroshipping.live` → `200 OK`
+
+**Step 13 — SSL auto-renewal cron job:**
+```bash
+crontab -e
+# Added:
+0 3 * * * certbot renew --quiet && systemctl reload nginx
+```
+Dry run confirmed `access.navarroshipping.live` renewal simulation succeeded.
+
+Note: `accessbluewave.site` showed a renewal failure in the dry run — this is a pre-existing issue with another app (manual plugin, not Nginx). Not related to Navarro deployment. Site was manually verified on April 13, 2026 — live and showing valid padlock (connection secure). Left untouched. Only revisit if SSL expires or stops working.
+
+**Step 14 — Final health check (April 13, 2026):**
+
+| Check | Result |
+|---|---|
+| navarro PM2 | online, 0 restarts |
+| All other apps | online, untouched |
+| Disk space | 8.1G / 48G (17%) |
+| Memory | 1.4G / 3.8G used, 2.4G available |
+| CPU load | 0.00, 0.07, 0.08 — idle |
+| Server uptime | 68 days |
+| HTTPS | 200 OK on access.navarroshipping.live |
+
+**Deployment completed successfully on April 13, 2026.**
+
+**Key findings from audit:**
+- Port `3010` is confirmed free for Navarro
+- PostgreSQL is already installed (port 5432) — skip installation, go straight to creating the database
+- MySQL is also present (used by other apps, not needed for Navarro)
+- All 4 existing apps are online and healthy
+
+---
+
+---
+
+### Session 3 — Logging Protocol Established (April 13, 2026)
+
+**What was decided:**
+
+All future Claude Code interactions on this project will be recorded in this README under the Session Log section.
+
+Each session entry will document:
+- What was asked or requested
+- What was done (commands run, files changed, decisions made)
+- Any errors encountered and how they were resolved
+- Outcomes and current state
+
+This ensures a full audit trail of every change made to the Navarro Shipping app — both in code and on the VPS.
+
+---
+
+### Session 4 — Bug Fix: "Not Authenticated" on Create Shipment (April 13, 2026)
+
+**Issue reported:** Admin could not create shipments — every attempt returned "failed to create shipment not authenticated".
+
+**Root cause:** The session cookie in `server/index.ts` was missing the `sameSite` attribute. Without it, modern browsers (Chrome 80+) apply unpredictable defaults that can prevent the session cookie from being sent with certain requests (particularly POST), causing the server to reject the request as unauthenticated even though the admin appeared logged in on the UI.
+
+**Fix applied (`server/index.ts`):**
+```js
+// Before
+cookie: {
+  secure: process.env.NODE_ENV === "production",
+  httpOnly: true,
+  maxAge: 24 * 60 * 60 * 1000,
+}
+
+// After
+cookie: {
+  secure: process.env.NODE_ENV === "production",
+  httpOnly: true,
+  sameSite: "lax",     // ← added
+  maxAge: 24 * 60 * 60 * 1000,
+}
+```
+
+**To deploy this fix on the VPS:**
+```bash
+cd /var/www/navarro
+git pull origin main
+npm run build
+pm2 restart navarro
+pm2 logs navarro --lines 20
+```
+
+**Why `sameSite: "lax"`?** Lax mode allows the cookie to be sent on all same-site requests (including POST from the same domain) while blocking cross-site cookie abuse. This is the correct setting for a single-domain app behind Nginx.
+
+---
+
 ## Troubleshooting
 
 | Problem | Command to diagnose |
@@ -401,6 +733,7 @@ The server auto-creates an admin account on first start (if none exists):
 | Port conflict | `ss -tlnp \| grep 3010` |
 | SSL issues | `sudo certbot certificates` |
 | App won't start after reboot | `pm2 resurrect` |
+| Nginx orphaned process (bind failed) | `ss -tlnp \| grep -E ':80\|:443'` then `nginx -s stop && systemctl start nginx` |
 
 ---
 
